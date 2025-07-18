@@ -1,0 +1,19 @@
+{
+  "name": "fredrick-writes-dynamic",
+  "version": "1.0.0",
+  "description": "Automated blog system with authentication and auto-archiving",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "npm run build:functions",
+    "build:functions": "netlify-lambda build functions"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "netlify-lambda": "^2.0.16"
+  }
+}

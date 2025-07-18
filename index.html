@@ -14,7 +14,7 @@
       <a href="index.html" class="active">Home</a>
       <a href="about.html">About</a>
       <a href="blog.html">Blog</a>
-      <a href="admin.html">Write</a>
+      <a href="write.html">Write</a>
     </nav>
   </header>
   
@@ -26,18 +26,8 @@
     
     <section class="recent-posts">
       <h3>Recent Posts</h3>
-      <div class="post-grid">
-        <article class="post-card">
-          <h4><a href="posts/archive/my-old-post.html">My Old Post</a></h4>
-          <p class="post-meta">Archived • July 18, 2025</p>
-          <p>This is a placeholder for an archived post. You can use this section to store thoughts or versions of articles you've revised...</p>
-        </article>
-        
-        <article class="post-card">
-          <h4><a href="posts/welcome-to-my-blog.html">Welcome to My Blog</a></h4>
-          <p class="post-meta">July 18, 2025</p>
-          <p>Welcome to Fredrick Writes! This is where I'll be sharing my thoughts, experiences, and insights on various topics...</p>
-        </article>
+      <div id="postsContainer" class="post-grid">
+        <div class="loading">Loading recent posts...</div>
       </div>
     </section>
   </main>
@@ -45,5 +35,57 @@
   <footer>
     <p>&copy; 2025 Fredrick Writes. All rights reserved.</p>
   </footer>
+  
+  <script>
+    // Load recent posts dynamically
+    async function loadRecentPosts() {
+      try {
+        const response = await fetch('/.netlify/functions/get-posts');
+        const posts = await response.json();
+        
+        const container = document.getElementById('postsContainer');
+        
+        if (posts.length === 0) {
+          container.innerHTML = '<p>No posts yet. <a href="write.html">Write your first post!</a></p>';
+          return;
+        }
+        
+        const recentPosts = posts.slice(0, 3); // Show only 3 most recent
+        
+        container.innerHTML = recentPosts.map(post => {
+          const date = new Date(post.created_at).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          
+          const excerpt = post.plain_content ? 
+            post.plain_content.substring(0, 120) + '...' : 
+            'Read this post...';
+          
+          return `
+            <article class="post-card">
+              <h4>${post.title}</h4>
+              <p class="post-meta">${date}</p>
+              <p>${excerpt}</p>
+              <div style="margin-top: 1rem;">
+                <strong>Full post:</strong><br>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                  ${post.content}
+                </div>
+              </div>
+            </article>
+          `;
+        }).join('');
+        
+      } catch (error) {
+        document.getElementById('postsContainer').innerHTML = 
+          '<p>Unable to load posts. Please try again later.</p>';
+      }
+    }
+    
+    // Load posts when page loads
+    loadRecentPosts();
+  </script>
 </body>
 </html>
