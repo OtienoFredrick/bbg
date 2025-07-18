@@ -1,8 +1,7 @@
-const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs').promises;
+const path = require('path');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const POSTS_INDEX_FILE = path.join(process.cwd(), 'posts-index.json');
 
 exports.handler = async (event, context) => {
   // Handle CORS
@@ -18,13 +17,20 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .eq('status', 'published')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
+    // Read posts from file-based index
+    let posts = [];
+    try {
+      const indexData = await fs.readFile(POSTS_INDEX_FILE, 'utf8');
+      posts = JSON.parse(indexData);
+    } catch (e) {
+      // No posts yet, return empty array
+      posts = [];
+    }
+    
+    // Filter only published posts and sort by date (newest first)
+    const publishedPosts = posts
+      .filter(post => post.status === 'published')
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
 
     return {
       statusCode: 200,
@@ -32,7 +38,7 @@ exports.handler = async (event, context) => {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(publishedPosts)
     };
   } catch (error) {
     return {

@@ -1,12 +1,12 @@
+const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
-const fs = require('fs').promises;
-const path = require('path');
 
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-// Simple file-based storage for now (works without database)
-const POSTS_DIR = path.join(process.cwd(), 'posts');
-const POSTS_INDEX_FILE = path.join(process.cwd(), 'posts-index.json');
+// Only create client if Supabase is configured
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 // Convert plain text to HTML
 function convertToHTML(text) {
@@ -64,51 +64,6 @@ function createSlug(title) {
     .replace(/^-+|-+$/g, '');
 }
 
-function createPostHTML(title, content, slug, date) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} - Fredrick Writes</title>
-  <meta name="description" content="${title}">
-  <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-  <header>
-    <h1>Fredrick Writes</h1>
-    <nav>
-      <a href="../index.html">Home</a>
-      <a href="../about.html">About</a>
-      <a href="../blog.html">Blog</a>
-      <a href="../write.html">Write</a>
-    </nav>
-  </header>
-  
-  <main>
-    <article class="post">
-      <header class="post-header">
-        <h1>${title}</h1>
-        <time datetime="${new Date(date).toISOString()}">${new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
-      </header>
-      
-      <div class="post-content">
-        ${content}
-      </div>
-    </article>
-    
-    <nav class="post-navigation">
-      <a href="../blog.html" class="back-to-blog">← Back to Blog</a>
-    </nav>
-  </main>
-  
-  <footer>
-    <p>&copy; 2025 Fredrick Writes. All rights reserved.</p>
-  </footer>
-</body>
-</html>`;
-}
-
 exports.handler = async (event, context) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -156,48 +111,29 @@ exports.handler = async (event, context) => {
     // Convert plain text to HTML
     const htmlContent = convertToHTML(content);
     const slug = createSlug(title);
-    const now = new Date();
     
-    // Create post data
-    const postData = {
-      id: now.getTime(),
-      title,
-      slug,
-      content: htmlContent,
-      plainContent: content,
-      date: now.toISOString(),
-      status: 'published'
-    };
-    
-    // Create HTML file for the post
-    const postHTML = createPostHTML(title, htmlContent, slug, now);
-    const postFilePath = path.join(POSTS_DIR, `${slug}.html`);
-    
-    try {
-      // Ensure posts directory exists
-      await fs.mkdir(POSTS_DIR, { recursive: true });
-      
-      // Write the HTML file
-      await fs.writeFile(postFilePath, postHTML, 'utf8');
-      
-      // Update posts index
-      let postsIndex = [];
-      try {
-        const indexData = await fs.readFile(POSTS_INDEX_FILE, 'utf8');
-        postsIndex = JSON.parse(indexData);
-      } catch (e) {
-        // File doesn't exist yet, start with empty array
-      }
-      
-      // Add new post to beginning of array
-      postsIndex.unshift(postData);
-      
-      // Write updated index
-      await fs.writeFile(POSTS_INDEX_FILE, JSON.stringify(postsIndex, null, 2), 'utf8');
-      
-    } catch (fileError) {
-      throw new Error(`Failed to save post: ${fileError.message}`);
+    if (!supabase) {
+      return {
+        statusCode: 500,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ error: 'Supabase not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.' })
+      };
     }
+    
+    const { data, error } = await supabase
+      .from('posts')
+      .insert([
+        {
+          title,
+          content: htmlContent,
+          plain_content: content,
+          slug,
+          status: 'published'
+        }
+      ])
+      .select();
+
+    if (error) throw error;
 
     return {
       statusCode: 200,
@@ -207,7 +143,7 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({ 
         success: true, 
-        post: postData,
+        post: data[0],
         message: 'Post published successfully!' 
       })
     };
