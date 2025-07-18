@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Writer - Fredrick Writes</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .simple-writer {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .writing-area {
+      background: var(--bg-light);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--primary-color);
+    }
+    
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+    
+    .form-group textarea {
+      min-height: 300px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    
+    .helper-text {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-top: 0.5rem;
+      background: white;
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      border-left: 4px solid var(--secondary-color);
+    }
+    
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-right: 1rem;
+    }
+    
+    .btn-primary {
+      background: var(--secondary-color);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-color);
+    }
+    
+    .btn-secondary {
+      background: var(--bg-light);
+      color: var(--text-color);
+      border: 2px solid var(--border-color);
+    }
+    
+    .preview-area,
+    .output-area {
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+    
+    .output-area textarea {
+      width: 100%;
+      height: 200px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.9rem;
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+    }
+    
+    .status-message {
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fredrick Writes</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="blog.html">Blog</a>
+      <a href="admin.html">Advanced Writer</a>
+      <a href="simple-writer.html" class="active">Simple Writer</a>
+    </nav>
+  </header>
+  
+  <main class="simple-writer">
+    <h2>📝 Simple Writer</h2>
+    <p style="color: var(--text-light); margin-bottom: 2rem;">
+      Write naturally! No HTML needed. Just type your thoughts and I'll format them for you.
+    </p>
+    
+    <div id="statusMessage"></div>
+    
+    <div class="writing-area">
+      <div class="form-group">
+        <label for="simpleTitle">Post Title</label>
+        <input type="text" id="simpleTitle" placeholder="What's on your mind today?">
+      </div>
+      
+      <div class="form-group">
+        <label for="simpleContent">Your Thoughts</label>
+        <textarea id="simpleContent" placeholder="Just start writing...
+
+Example:
+Today I was thinking about productivity. It's amazing how small changes can make a big difference.
+
+Here's what I learned:
+- Focus on one task at a time
+- Take breaks when you need them  
+- Don't overthink things
+
+The key insight was that simple solutions often work best. Sometimes we complicate things unnecessarily.
+
+What do you think about this approach?"></textarea>
+        
+        <div class="helper-text">
+          <strong>📋 Writing Tips:</strong><br>
+          • Write normally, like you're texting a friend<br>
+          • Use blank lines to separate paragraphs<br>
+          • Start lines with "-" or "•" for bullet points<br>
+          • Put section titles on their own line<br>
+          • I'll automatically format everything for your blog!
+        </div>
+      </div>
+      
+      <button class="btn btn-secondary" onclick="previewSimple()">👀 Preview</button>
+      <button class="btn btn-primary" onclick="generateSimple()">🚀 Create Post</button>
+    </div>
+    
+    <div id="previewArea" class="preview-area" style="display: none;">
+      <h3>Preview</h3>
+      <div id="previewContent"></div>
+    </div>
+    
+    <div id="outputArea" class="output-area" style="display: none;">
+      <h3>Your Post is Ready!</h3>
+      <p>Copy this code and save it as <code id="simpleFilename"></code> in your posts folder:</p>
+      <textarea id="simpleOutput" readonly></textarea>
+      <div style="margin-top: 1rem;">
+        <button class="btn btn-secondary" onclick="copySimpleCode()">📋 Copy</button>
+        <button class="btn btn-primary" onclick="downloadSimple()">💾 Download</button>
+      </div>
+    </div>
+  </main>
+  
+  <footer>
+    <p>&copy; 2025 Fredrick Writes. All rights reserved.</p>
+  </footer>
+  
+  <script>
+    // Convert simple text to HTML
+    function convertToHTML(text) {
+      let html = '';
+      const lines = text.split('\n');
+      let inList = false;
+      
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        
+        if (line === '') {
+          if (inList) {
+            html += '</ul>\n';
+            inList = false;
+          }
+          continue;
+        }
+        
+        // Check if it's a bullet point
+        if (line.startsWith('- ') || line.startsWith('• ')) {
+          if (!inList) {
+            html += '<ul>\n';
+            inList = true;
+          }
+          html += `  <li>${line.substring(2)}</li>\n`;
+        }
+        // Check if it looks like a heading (short line, no punctuation at end)
+        else if (line.length < 50 && !line.endsWith('.') && !line.endsWith('!') && !line.endsWith('?') && i > 0) {
+          if (inList) {
+            html += '</ul>\n';
+            inList = false;
+          }
+          html += `<h3>${line}</h3>\n`;
+        }
+        // Regular paragraph
+        else {
+          if (inList) {
+            html += '</ul>\n';
+            inList = false;
+          }
+          html += `<p>${line}</p>\n\n`;
+        }
+      }
+      
+      if (inList) {
+        html += '</ul>\n';
+      }
+      
+      return html;
+    }
+    
+    // Preview the post
+    function previewSimple() {
+      const title = document.getElementById('simpleTitle').value;
+      const content = document.getElementById('simpleContent').value;
+      
+      if (!title || !content) {
+        showMessage('Please add a title and some content to preview.', 'error');
+        return;
+      }
+      
+      const htmlContent = convertToHTML(content);
+      const previewArea = document.getElementById('previewArea');
+      const previewContent = document.getElementById('previewContent');
+      
+      previewContent.innerHTML = `
+        <h2 style="color: var(--primary-color); margin-bottom: 1rem;">${title}</h2>
+        <p style="color: var(--text-light); margin-bottom: 2rem;">
+          <time>${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+        </p>
+        <div>${htmlContent}</div>
+      `;
+      
+      previewArea.style.display = 'block';
+      previewArea.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Generate the final post
+    function generateSimple() {
+      const title = document.getElementById('simpleTitle').value;
+      const content = document.getElementById('simpleContent').value;
+      
+      if (!title || !content) {
+        showMessage('Please fill in both title and content.', 'error');
+        return;
+      }
+      
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const htmlContent = convertToHTML(content);
+      const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      
+      const template = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title} - Fredrick Writes</title>
+  <meta name="description" content="${title}">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header>
+    <h1>Fredrick Writes</h1>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../about.html">About</a>
+      <a href="../blog.html">Blog</a>
+    </nav>
+  </header>
+  
+  <main class="post-content">
+    <article>
+      <header class="post-header">
+        <h2>${title}</h2>
+        <p class="post-meta">
+          <time>${today}</time>
+        </p>
+      </header>
+      
+      <div class="post-body">
+        ${htmlContent}
+      </div>
+    </article>
+    
+    <nav class="post-navigation">
+      <a href="../blog.html" class="back-to-blog">← Back to Blog</a>
+    </nav>
+  </main>
+  
+  <footer>
+    <p>&copy; 2025 Fredrick Writes. All rights reserved.</p>
+  </footer>
+</body>
+</html>`;
+      
+      document.getElementById('simpleOutput').value = template;
+      document.getElementById('simpleFilename').textContent = `${slug}.html`;
+      document.getElementById('outputArea').style.display = 'block';
+      document.getElementById('outputArea').scrollIntoView({ behavior: 'smooth' });
+      
+      showMessage(`Post "${title}" is ready! 🎉`, 'success');
+    }
+    
+    // Copy code to clipboard
+    function copySimpleCode() {
+      const textarea = document.getElementById('simpleOutput');
+      textarea.select();
+      navigator.clipboard.writeText(textarea.value);
+      showMessage('Code copied! 📋', 'success');
+    }
+    
+    // Download the file
+    function downloadSimple() {
+      const content = document.getElementById('simpleOutput').value;
+      const filename = document.getElementById('simpleFilename').textContent;
+      
+      const blob = new Blob([content], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      showMessage(`Downloaded ${filename}! 💾`, 'success');
+    }
+    
+    // Show status message
+    function showMessage(message, type) {
+      const statusDiv = document.getElementById('statusMessage');
+      statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+      setTimeout(() => {
+        statusDiv.innerHTML = '';
+      }, 3000);
+    }
+    
+    // Auto-generate slug preview
+    document.getElementById('simpleTitle').addEventListener('input', function() {
+      const title = this.value;
+      if (title) {
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        // Could show slug preview here if needed
+      }
+    });
+  </script>
+</body>
+</html>
